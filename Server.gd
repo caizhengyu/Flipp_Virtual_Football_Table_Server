@@ -15,17 +15,43 @@ func _ready():
 	
 func _player_connected(id):
 	print("Player "+ str(id) + " connected!!")
-	Players.playerIds.append(id)
-	if Players.playerIds.size() == 2:
-		rpc_id(Players.playerIds[0], "register_player", Players.playerIds)
-		rpc_id(Players.playerIds[1], "register_player", Players.playerIds)
-		Players.playerIds = []
+
 	
 func _player_disconnected(id):
 	print("Player " + str(id) + " disconnected!!")
-	if id in Players.playerIds:
-		Players.playerIds = []
+	Players.playerNames.erase(str(id))
+	for m in Players.matches:
+		if id in m:
+			Players.matches.erase(m)
+
+
 
 remote func register_names(info):
-	print("Player " + info.id + " registered with name " + info.name)
-	Players.playerNames
+	print("Player " + str(info.id) + " registered with name " + info.name)
+	Players.playerNames[str(info.id)] = info.name
+
+
+remote func findPublicMatch(playerInfo):
+	register_names(playerInfo)
+	if Players.matches.size() == 0 or Players.matches[-1].size() == 2:
+		Players.matches.append([playerInfo.id])
+		return
+	var curMatch = Players.matches[-1]
+	curMatch.append(playerInfo.id)
+	rpc_id(curMatch[0], "public_register_player", curMatch)
+	rpc_id(curMatch[1], "public_register_player", curMatch)
+
+	print(Players.matches)
+	
+
+remote func challengePlayer(playerInfo):
+	print(playerInfo)
+	print(Players.matches)
+	if not Players.playerNames.has(str(playerInfo.playerId)):
+		return
+	var id = get_tree().get_rpc_sender_id()
+	var curMatch = [playerInfo.playerId, id]
+	Players.matches.append(curMatch)
+	print(Players.matches)
+	rpc_id(curMatch[0], "private_register_player", curMatch)
+	rpc_id(curMatch[1], "private_register_player", curMatch)
