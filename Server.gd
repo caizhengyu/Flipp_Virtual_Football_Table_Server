@@ -19,11 +19,18 @@ func _player_connected(id):
 	
 func _player_disconnected(id):
 	print("Player " + str(id) + " disconnected!!")
+	print(Players.playerNames)
 	Players.playerNames.erase(str(id))
+	print(Players.playerNames)
 	for m in Players.matches:
+		print(Players.matches)
 		if id in m:
+			var oppenentId = m[0]
+			if id == m[0]:
+				oppenentId = m[1]
+			rpc_id(oppenentId, "enemyForfeit")
 			Players.matches.erase(m)
-
+			print(oppenentId)
 
 
 remote func register_names(info):
@@ -38,8 +45,9 @@ remote func findPublicMatch(playerInfo):
 		return
 	var curMatch = Players.matches[-1]
 	curMatch.append(playerInfo.id)
-	rpc_id(curMatch[0], "public_register_player", curMatch)
-	rpc_id(curMatch[1], "public_register_player", curMatch)
+	curMatch = _grabNames(curMatch)
+	rpc_id(curMatch[0][0], "startMatch", curMatch)
+	rpc_id(curMatch[1][0], "startMatch", curMatch)
 
 	
 
@@ -48,9 +56,16 @@ remote func challengePlayer(playerInfo):
 	if not Players.playerNames.has(str(playerInfo.playerId)):
 		return
 	var id = get_tree().get_rpc_sender_id()
-	register_names({"id": id, "name": name})
+	register_names({"id": id, "name": playerInfo.name})
 	var curMatch = [id, playerInfo.playerId]
 	Players.matches.append(curMatch)
-	print(Players.matches)
-	rpc_id(curMatch[0], "private_register_player", curMatch)
-	rpc_id(curMatch[1], "private_register_player", curMatch)
+	curMatch = _grabNames(curMatch)
+	rpc_id(curMatch[0][0], "startMatch", curMatch)
+	rpc_id(curMatch[1][0], "startMatch", curMatch)
+
+
+func _grabNames(curMatch):
+	var newMatch = [null, null]
+	newMatch[0] = [curMatch[0], Players.playerNames[str(curMatch[0])]]
+	newMatch[1] = [curMatch[1], Players.playerNames[str(curMatch[1])]]
+	return newMatch
