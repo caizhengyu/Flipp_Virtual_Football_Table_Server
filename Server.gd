@@ -41,16 +41,15 @@ remote func findPublicMatch(playerInfo):
 	rpc_id(curMatch[0], "public_register_player", curMatch)
 	rpc_id(curMatch[1], "public_register_player", curMatch)
 
-	print(Players.matches)
 	
 
 remote func challengePlayer(playerInfo):
 	print(playerInfo)
-	print(Players.matches)
 	if not Players.playerNames.has(str(playerInfo.playerId)):
 		return
 	var id = get_tree().get_rpc_sender_id()
-	var curMatch = [playerInfo.playerId, id]
+	register_names({"id": id, "name": name})
+	var curMatch = [id, playerInfo.playerId]
 	Players.matches.append(curMatch)
 	print(Players.matches)
 	rpc_id(curMatch[0], "private_register_player", curMatch)
